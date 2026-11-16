@@ -1,0 +1,2358 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Jigsaw Puzzler</title>
+  <style>
+    :root {
+      --bg: #f4f5f8;
+      --surface: #ffffff;
+      --surface-subtle: #f9fafb;
+      --border: #e4e7ec;
+      --ink: #18181b;
+      --muted: #667085;
+      --brand: #ee4d2d;
+      --brand-hover: #d73818;
+      --brand-soft: #fff1ee;
+      --brand-ink: #ffffff;
+      --success: #12b76a;
+      --success-soft: #ecfdf3;
+      --danger: #f04438;
+      --danger-soft: #fef3f2;
+      --warning: #f79009;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 16px rgba(16, 24, 40, 0.08), 0 1px 3px rgba(16, 24, 40, 0.05);
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Prompt", "Kanit", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Header */
+    .app-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .header-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--brand);
+      color: var(--brand-ink);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* Network Source Switch */
+    .source-toggle {
+      display: inline-flex;
+      align-items: center;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .source-btn {
+      border: none;
+      background: transparent;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 5px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .source-btn.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+
+    .source-btn.active .dot.online {
+      background: var(--success);
+    }
+
+    .source-btn.active .dot.offline {
+      background: var(--brand);
+    }
+
+    /* Mode Tabs */
+    .mode-nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mode-nav-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 16px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+    }
+
+    .mode-tab {
+      border: none;
+      background: transparent;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .mode-tab:hover {
+      color: var(--ink);
+    }
+
+    .mode-tab.active {
+      color: var(--brand);
+      border-bottom-color: var(--brand);
+    }
+
+    /* Main Layout */
+    .main-container {
+      max-width: 1080px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (min-width: 840px) {
+      .main-container {
+        grid-template-columns: 380px 1fr;
+        gap: 24px;
+      }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0 0 12px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    /* Captcha Widget Box (Authentic Shopee/Mobile Verification Look) */
+    .captcha-shell {
+      max-width: 380px;
+      width: 100%;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .captcha-topbar {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .captcha-heading {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .captcha-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .icon-btn:hover {
+      background: var(--surface-subtle);
+      color: var(--ink);
+    }
+
+    /* Timer & Status Strip */
+    .status-strip {
+      padding: 8px 16px;
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      gap: 8px;
+    }
+
+    .timer-pill {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eef2f6;
+      color: var(--ink);
+    }
+
+    .timer-pill.urgent {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .timer-bar-wrap {
+      height: 4px;
+      width: 100%;
+      background: #e4e7ec;
+      overflow: hidden;
+    }
+
+    .timer-bar-fill {
+      height: 100%;
+      width: 100%;
+      background: var(--brand);
+      transform-origin: left center;
+      transition: width 0.05s linear;
+    }
+
+    /* Canvas Stage */
+    .captcha-body {
+      padding: 16px;
+    }
+
+    .canvas-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 320 / 176;
+      background: #1f2937;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .canvas-stage canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .piece-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+
+    /* Result Banner Overlay inside Canvas */
+    .verify-banner {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transform: translateY(100%);
+      transition: transform 0.18s ease;
+    }
+
+    .verify-banner.show {
+      transform: translateY(0);
+    }
+
+    .verify-banner.pass {
+      background: rgba(18, 183, 106, 0.94);
+    }
+
+    .verify-banner.fail {
+      background: rgba(240, 68, 56, 0.94);
+    }
+
+    /* Slider Track & Handle */
+    .slider-container {
+      margin-top: 14px;
+      position: relative;
+      height: 46px;
+      background: #eceef1;
+      border-radius: 4px;
+      border: 1px solid #dcdfe4;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .slider-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 0;
+      background: rgba(238, 77, 45, 0.18);
+      border-right: 1px solid rgba(238, 77, 45, 0.35);
+      pointer-events: none;
+    }
+
+    .slider-container.pass .slider-fill {
+      background: rgba(18, 183, 106, 0.2);
+      border-right-color: var(--success);
+    }
+
+    .slider-container.fail .slider-fill {
+      background: rgba(240, 68, 56, 0.2);
+      border-right-color: var(--danger);
+    }
+
+    .slider-hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-left: 44px;
+      font-size: 13px;
+      color: #5f6672;
+      pointer-events: none;
+      transition: opacity 0.15s;
+    }
+
+    .slider-handle {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 48px;
+      height: 40px;
+      background: var(--brand);
+      color: #ffffff;
+      border-radius: 3px;
+      display: grid;
+      place-items: center;
+      cursor: grab;
+      box-shadow: 0 2px 6px rgba(238, 77, 45, 0.35);
+      touch-action: none;
+    }
+
+    .slider-handle:active {
+      cursor: grabbing;
+      background: var(--brand-hover);
+    }
+
+    .slider-container.pass .slider-handle {
+      background: var(--success);
+      box-shadow: 0 2px 6px rgba(18, 183, 106, 0.35);
+    }
+
+    .slider-container.fail .slider-handle {
+      background: var(--danger);
+      box-shadow: 0 2px 6px rgba(240, 68, 56, 0.35);
+    }
+
+    .captcha-footer {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .puzzle-id {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      color: #98a2b3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 210px;
+    }
+
+    /* Controls & Forms */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    @media (min-width: 540px) {
+      .form-grid.two-col {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .field-value {
+      font-weight: 700;
+      color: var(--brand);
+    }
+
+    select,
+    input[type="number"] {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font: inherit;
+      font-size: 14px;
+      color: var(--ink);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--brand);
+      cursor: pointer;
+    }
+
+    .btn {
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--brand);
+      color: var(--brand-ink);
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-hover);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--ink);
+      border-color: var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface-subtle);
+    }
+
+    .btn-danger {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border-color: #fecdca;
+    }
+
+    .btn-danger:hover {
+      background: #fee4e2;
+    }
+
+    /* Chapters & Stages List */
+    .chapter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .chapter-box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      background: var(--surface-subtle);
+    }
+
+    .chapter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .chapter-name {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .chapter-desc {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stage-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      gap: 8px;
+    }
+
+    .stage-btn {
+      text-align: left;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .stage-btn:hover {
+      border-color: var(--brand);
+    }
+
+    .stage-btn.active {
+      border-color: var(--brand);
+      background: var(--brand-soft);
+    }
+
+    .stage-btn.completed {
+      border-color: #a6f4c5;
+    }
+
+    .stage-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stage-meta {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    /* Score Summary Banner */
+    .summary-box {
+      background: var(--brand-soft);
+      border: 1px solid #f9dbaf;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .summary-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 0 0 10px 0;
+    }
+
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .stat-tile {
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .stat-num {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Scoreboard Table */
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--surface-subtle);
+    }
+
+    td.num,
+    th.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 24px 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #eef2f6;
+      color: var(--ink);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+<style data-link-removed-style>a[data-link-removed],a[href*="zPythonSafez"]:not([onclick]){pointer-events:none!important;cursor:default!important;opacity:.6}</style></head>
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <div class="brand-icon" aria-hidden="true">🧩</div>
+        <div>
+          <h1 class="brand-title">Jigsaw Puzzler</h1>
+          <p class="brand-subtitle">ฝึกเลื่อนจิ๊กซอว์แคปช่าแบบสุ่มไม่จำกัด รองรับมือถือ &amp; เดสก์ท็อป</p>
+        </div>
+      </div>
+
+      <!-- Offline / Online Switch -->
+      <div class="source-toggle" role="group" aria-label="สลับโหมดรูปภาพ Offline และ Online">
+        <button type="button" id="btnOffline" class="source-btn active">
+          <span class="dot offline"></span> Offline (สร้างภาพอัตโนมัติ)
+        </button>
+        <button type="button" id="btnOnline" class="source-btn">
+          <span class="dot online"></span> Online (ดึงภาพสุ่มจากเว็บ)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mode Navigation -->
+  <nav class="mode-nav" aria-label="โหมดการเล่น">
+    <div class="mode-nav-inner">
+      <button type="button" class="mode-tab active" data-mode="game">🎮 โหมด Game (ตะลุยด่าน)</button>
+      <button type="button" class="mode-tab" data-mode="practice">⏱️ โหมด Practice (ฝึกซ้อม &amp; สถิติ)</button>
+      <button type="button" class="mode-tab" data-mode="sandbox">🛠️ โหมด Sandbox (ปรับแต่งอิสระ)</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-container">
+
+    <!-- Left Column: Captcha Verification Widget -->
+    <section aria-label="พื้นที่เล่น Captcha">
+      <div class="captcha-shell">
+        <div class="captcha-topbar">
+          <span class="captcha-heading" id="widgetTitle">Verification</span>
+          <div class="captcha-actions">
+            <button type="button" class="icon-btn" id="btnRefreshPuzzle" title="สุ่มจิ๊กซอว์ใหม่" aria-label="สุ่มจิ๊กซอว์ใหม่">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                <path d="M16 16h5v5"/>
+              </svg>
+            </button>
+            <button type="button" class="icon-btn" id="btnStopRound" title="จบการทดสอบและดูคะแนน" aria-label="จบการทดสอบและดูคะแนน">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Round & Countdown Status -->
+        <div class="status-strip">
+          <span id="roundProgressText">ข้อที่ 1 / 10</span>
+          <span id="liveScoreText">คะแนน: 0 (ผ่าน 0)</span>
+          <span class="timer-pill" id="timerDisplay">3.00s</span>
+        </div>
+        <div class="timer-bar-wrap">
+          <div class="timer-bar-fill" id="timerBar"></div>
+        </div>
+
+        <div class="captcha-body">
+          <div class="canvas-stage" id="canvasStage">
+            <canvas id="bgCanvas" width="320" height="176"></canvas>
+            <canvas id="pieceCanvas" class="piece-canvas" width="320" height="176"></canvas>
+            <div class="verify-banner" id="verifyBanner">
+              <span id="verifyMsg">สำเร็จ!</span>
+              <span id="verifyDetail">0.85s</span>
+            </div>
+          </div>
+
+          <!-- Slider Bar -->
+          <div class="slider-container" id="sliderTrack">
+            <div class="slider-fill" id="sliderFill"></div>
+            <div class="slider-hint" id="sliderHint">เลื่อนแถบเพื่อเติมภาพจิ๊กซอว์ให้สมบูรณ์</div>
+            <div class="slider-handle" id="sliderHandle" role="slider" tabindex="0" aria-label="เลื่อนจิ๊กซอว์" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="captcha-footer">
+            <span id="decoysInfoBadge" class="badge">ตัวหลอก: 0 | ขนาด ±0%</span>
+            <span class="puzzle-id" id="puzzleIdText">ID: 633aa361-7cfc-4562</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Mode Configuration, Chapters, Summary & Scoreboard -->
+    <section aria-label="ตั้งค่าโหมดและผลคะแนน">
+
+      <!-- Result Summary Box (Shown when test count reached or user stops) -->
+      <div id="resultSummaryBox" class="summary-box hidden">
+        <h2 class="summary-title" id="summaryHeadline">สรุปผลการทดสอบ</h2>
+        <div class="summary-stats">
+          <div class="stat-tile">
+            <div class="stat-label">คะแนนรวม</div>
+            <div class="stat-num" id="sumScore">0</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-label">ความแม่นยำ</div>
+            <div class="stat-num" id="sumAccuracy">0%</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-label">เวลาเฉลี่ย</div>
+            <div class="stat-num" id="sumAvgTime">0.00s</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-label">ผ่าน / ทั้งหมด</div>
+            <div class="stat-num" id="sumPassed">0 / 0</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-primary" id="btnPlayAgain">เล่นรอบใหม่อีกครั้ง</button>
+          <button type="button" class="btn btn-secondary hidden" id="btnNextStage">ไปด่านถัดไป →</button>
+        </div>
+      </div>
+
+      <!-- 1. GAME MODE PANEL -->
+      <div id="panelGame" class="card">
+        <div class="card-title">
+          <span>โหมด Game — เลือก Chapter และด่าน</span>
+          <span class="badge" id="gameStatusBadge">Chapter 1 - ด่าน 1</span>
+        </div>
+        <p style="font-size:13px; color:var(--muted); margin:0 0 14px 0;">
+          แต่ละ Chapter แบ่งระดับความยากตามจำนวนตัวหลอก (0 ถึง 3 ตัวที่มีรูปทรง ตำแหน่ง องศาการหมุน และขนาด ±10%/20% ต่างจากตัวจริง) พร้อมจำกัดเวลาตั้งแต่ 3.0 วินาที ลงไปจนถึง 1.0 วินาที
+        </p>
+        <div class="chapter-list" id="chapterListContainer"></div>
+      </div>
+
+      <!-- 2. PRACTICE MODE PANEL -->
+      <div id="panelPractice" class="card hidden">
+        <div class="card-title">
+          <span>โหมด Practice — ตั้งค่าการฝึกซ้อม</span>
+          <button type="button" class="btn btn-danger" id="btnStopPractice" style="padding:6px 12px; font-size:12px;">
+            ⏹ หยุดเล่น &amp; สรุปคะแนน
+          </button>
+        </div>
+
+        <div class="form-grid two-col" style="margin-bottom: 18px;">
+          <div class="field">
+            <label class="field-label" for="pracDifficulty">ระดับความยาก (ตัวหลอก &amp; ขนาด)</label>
+            <select id="pracDifficulty">
+              <option value="easy">ง่าย (ไม่มีตัวหลอก)</option>
+              <option value="medium" selected>ปานกลาง (ตัวหลอก 1 ตัว ขนาด ±10%)</option>
+              <option value="hard">ยาก (ตัวหลอก 2 ตัว ขนาด ±10%/20% + หมุนองศา)</option>
+              <option value="extreme">นรกแตก (ตัวหลอก 3 ตัว ขนาด ±10%/20% + หมุนองศา)</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="pracTimeLimit">จำกัดเวลาต่อข้อ</label>
+            <select id="pracTimeLimit">
+              <option value="0">ไม่จำกัดเวลา</option>
+              <option value="3" selected>3.0 วินาที</option>
+              <option value="2.5">2.5 วินาที</option>
+              <option value="2">2.0 วินาที</option>
+              <option value="1.5">1.5 วินาที</option>
+              <option value="1">1.0 วินาที</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="pracTestCount">จำนวนครั้งที่ทดสอบ</label>
+            <select id="pracTestCount">
+              <option value="0" selected>สุ่มมาเรื่อยๆ ไม่จำกัด (กดหยุดเมื่อต้องการ)</option>
+              <option value="5">5 ครั้ง</option>
+              <option value="10">10 ครั้ง</option>
+              <option value="15">15 ครั้ง</option>
+              <option value="20">20 ครั้ง</option>
+            </select>
+          </div>
+
+          <div class="field" style="justify-content:flex-end;">
+            <button type="button" class="btn btn-primary" id="btnRestartPractice">เริ่มรอบซ้อมใหม่</button>
+          </div>
+        </div>
+
+        <!-- Scoreboard -->
+        <div style="border-top: 1px solid var(--border); padding-top: 16px;">
+          <div class="card-title" style="margin-bottom: 8px;">
+            <span>🏆 Score Board (สถิติโหมด Practice)</span>
+            <button type="button" class="btn btn-secondary" id="btnClearScoreboard" style="padding:4px 10px; font-size:12px;">ล้างสถิติ</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>รอบที่</th>
+                  <th>ความยาก</th>
+                  <th>เวลาจำกัด</th>
+                  <th class="num">ผ่าน/ทั้งหมด</th>
+                  <th class="num">เวลาเฉลี่ย</th>
+                  <th class="num">คะแนน</th>
+                </tr>
+              </thead>
+              <tbody id="scoreboardBody">
+                <tr>
+                  <td colspan="6" class="empty-state">ยังไม่มีสถิติการซ้อม ลองเลื่อนจิ๊กซอว์แล้วกด "หยุดเล่น &amp; สรุปคะแนน" เพื่อบันทึกสถิติ</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. SANDBOX MODE PANEL -->
+      <div id="panelSandbox" class="card hidden">
+        <div class="card-title">
+          <span>โหมด Sandbox — ปรับแต่งพารามิเตอร์อิสระ</span>
+          <button type="button" class="btn btn-secondary" id="btnApplySandbox" style="padding:6px 12px; font-size:12px;">สุ่มโจทย์ตามค่านี้</button>
+        </div>
+
+        <div class="form-grid two-col">
+          <div class="field">
+            <label class="field-label" for="sbDecoyCount">
+              <span>จำนวน Jigsaw ตัวหลอก (สูงสุด 3 ตัว)</span>
+              <span class="field-value" id="sbDecoyCountVal">2 ตัว</span>
+            </label>
+            <input type="range" id="sbDecoyCount" min="0" max="3" step="1" value="2">
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="sbDecoyScaleMode">ขนาดตัวหลอกเทียบกับตัวจริง</label>
+            <select id="sbDecoyScaleMode">
+              <option value="both" selected>สุ่มใหญ่หรือเล็กกว่า ±10% และ ±20%</option>
+              <option value="10">ใหญ่หรือเล็กกว่า ±10% (90% / 110%)</option>
+              <option value="20">ใหญ่หรือเล็กกว่า ±20% (80% / 120%)</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="sbDecoyRotation">องศาการหมุนของตัวหลอก</label>
+            <select id="sbDecoyRotation">
+              <option value="random" selected>สุ่มหมุนองศา (-35° ถึง +35°)</option>
+              <option value="extreme">หมุนอิสระรอบทิศ (15° ถึง 345°)</option>
+              <option value="none">ไม่หมุน (0°)</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="sbTimeLimit">
+              <span>เวลาจำกัดต่อข้อ (0 = ไม่จำกัด)</span>
+              <span class="field-value" id="sbTimeLimitVal">2.5 วินาที</span>
+            </label>
+            <input type="range" id="sbTimeLimit" min="0" max="5" step="0.5" value="2.5">
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="sbTolerance">
+              <span>ความคลาดเคลื่อนที่ยอมรับได้ (ไม่ต้องเป๊ะ)</span>
+              <span class="field-value" id="sbToleranceVal">±12 px</span>
+            </label>
+            <input type="range" id="sbTolerance" min="4" max="24" step="2" value="12">
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="sbTestCount">จำนวนครั้งที่ทดสอบ (ครบแล้วแสดงคะแนน)</label>
+            <select id="sbTestCount">
+              <option value="5">5 ครั้ง</option>
+              <option value="10" selected>10 ครั้ง</option>
+              <option value="20">20 ครั้ง</option>
+              <option value="0">ไม่จำกัดครั้ง</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      // --- CHAPTERS & STAGES DEFINITION (Game Mode) ---
+      const CHAPTERS = [
+        {
+          id: 1,
+          name: "Chapter 1: เริ่มต้นจับจังหวะ (ไม่มีตัวหลอก • 6 ด่าน)",
+          desc: "ฝึกเลื่อนจิ๊กซอว์แบบโค้งและหมุนเข้าช่องจริงโดยไม่มีตัวหลอก ไล่ระดับเวลาและเกณฑ์ความแม่นยำ (ด่านละ 10 ข้อ)",
+          stages: [
+            { id: "1-1", title: "ด่าน 1-1", decoys: 0, scaleMode: "10", rotate: "none", timeLimit: 3.0, questions: 10, tolerance: 16, tag: "เริ่มต้น • ±16px" },
+            { id: "1-2", title: "ด่าน 1-2", decoys: 0, scaleMode: "10", rotate: "none", timeLimit: 2.8, questions: 10, tolerance: 14, tag: "วอร์มอัป • ±14px" },
+            { id: "1-3", title: "ด่าน 1-3", decoys: 0, scaleMode: "10", rotate: "none", timeLimit: 2.5, questions: 10, tolerance: 13, tag: "จังหวะคงที่ • ±13px" },
+            { id: "1-4", title: "ด่าน 1-4", decoys: 0, scaleMode: "10", rotate: "none", timeLimit: 2.2, questions: 10, tolerance: 12, tag: "เร่งสปีด • ±12px" },
+            { id: "1-5", title: "ด่าน 1-5", decoys: 0, scaleMode: "10", rotate: "none", timeLimit: 2.0, questions: 10, tolerance: 11, tag: "แม่นยำสูง • ±11px" },
+            { id: "1-6", title: "ด่าน 1-6", decoys: 0, scaleMode: "10", rotate: "none", timeLimit: 1.8, questions: 10, tolerance: 10, tag: "บอส Ch.1 • ±10px" }
+          ]
+        },
+        {
+          id: 2,
+          name: "Chapter 2: ตัวหลอกเริ่มปรากฏ (ตัวหลอก 1 ตัว • 6 ด่าน)",
+          desc: "มีจิ๊กซอว์ตัวหลอก 1 ตัวที่รูปทรงต่างกัน สลับขนาด ±10%/±20% และการหมุนองศา (ด่านละ 10 ข้อ)",
+          stages: [
+            { id: "2-1", title: "ด่าน 2-1", decoys: 1, scaleMode: "10", rotate: "none", timeLimit: 3.0, questions: 10, tolerance: 14, tag: "ขนาด ±10% • ไม่หมุน" },
+            { id: "2-2", title: "ด่าน 2-2", decoys: 1, scaleMode: "20", rotate: "none", timeLimit: 2.8, questions: 10, tolerance: 13, tag: "ขนาด ±20% • ไม่หมุน" },
+            { id: "2-3", title: "ด่าน 2-3", decoys: 1, scaleMode: "10", rotate: "random", timeLimit: 2.5, questions: 10, tolerance: 12, tag: "ขนาด ±10% • หมุนเอียง" },
+            { id: "2-4", title: "ด่าน 2-4", decoys: 1, scaleMode: "both", rotate: "random", timeLimit: 2.3, questions: 10, tolerance: 12, tag: "ขนาด ±10/20% • หมุนเอียง" },
+            { id: "2-5", title: "ด่าน 2-5", decoys: 1, scaleMode: "both", rotate: "extreme", timeLimit: 2.0, questions: 10, tolerance: 11, tag: "หมุนรอบทิศ • ±11px" },
+            { id: "2-6", title: "ด่าน 2-6", decoys: 1, scaleMode: "10", rotate: "extreme", timeLimit: 1.8, questions: 10, tolerance: 10, tag: "บอส Ch.2 • ±10px" }
+          ]
+        },
+        {
+          id: 3,
+          name: "Chapter 3: ภาพลวงตาหลายมิติ (ตัวหลอก 2 ตัว • 7 ด่าน)",
+          desc: "ตัวหลอก 2 ตัว หลากหลายรูปแบบทั้งขนาด ±10%/20% องศาการหมุน และเวลาที่บีบเร้าใจขึ้น (ด่านละ 10 ข้อ)",
+          stages: [
+            { id: "3-1", title: "ด่าน 3-1", decoys: 2, scaleMode: "20", rotate: "none", timeLimit: 2.8, questions: 10, tolerance: 13, tag: "ขนาด ±20% • ไม่หมุน" },
+            { id: "3-2", title: "ด่าน 3-2", decoys: 2, scaleMode: "10", rotate: "random", timeLimit: 2.5, questions: 10, tolerance: 12, tag: "ขนาด ±10% • หมุนเอียง" },
+            { id: "3-3", title: "ด่าน 3-3", decoys: 2, scaleMode: "both", rotate: "random", timeLimit: 2.3, questions: 10, tolerance: 12, tag: "สุ่มขนาด • หมุนเอียง" },
+            { id: "3-4", title: "ด่าน 3-4", decoys: 2, scaleMode: "20", rotate: "extreme", timeLimit: 2.0, questions: 10, tolerance: 11, tag: "ขนาด ±20% • หมุนรอบทิศ" },
+            { id: "3-5", title: "ด่าน 3-5", decoys: 2, scaleMode: "both", rotate: "extreme", timeLimit: 1.8, questions: 10, tolerance: 10, tag: "สุ่มขนาด • หมุนรอบทิศ" },
+            { id: "3-6", title: "ด่าน 3-6", decoys: 2, scaleMode: "10", rotate: "extreme", timeLimit: 1.6, questions: 10, tolerance: 10, tag: "ใกล้เคียงตัวจริง • 1.6s" },
+            { id: "3-7", title: "ด่าน 3-7", decoys: 2, scaleMode: "both", rotate: "extreme", timeLimit: 1.5, questions: 10, tolerance: 9, tag: "บอส Ch.3 • ±9px" }
+          ]
+        },
+        {
+          id: 4,
+          name: "Chapter 4: ความเร็วแสงระดับโปร (ตัวหลอก 3 ตัว • 7 ด่าน)",
+          desc: "ตัวหลอกสูงสุด 3 ตัว ขนาด ±10%/20% หมุนองศาเต็มรูปแบบ และจำกัดเวลาตั้งแต่ 2.2s ลงไปถึง 1.0s! (ด่านละ 10 ข้อ)",
+          stages: [
+            { id: "4-1", title: "ด่าน 4-1", decoys: 3, scaleMode: "20", rotate: "random", timeLimit: 2.2, questions: 10, tolerance: 12, tag: "3 ตัวหลอก • ขนาด ±20%" },
+            { id: "4-2", title: "ด่าน 4-2", decoys: 3, scaleMode: "both", rotate: "random", timeLimit: 2.0, questions: 10, tolerance: 11, tag: "สุ่มขนาด • หมุนเอียง" },
+            { id: "4-3", title: "ด่าน 4-3", decoys: 3, scaleMode: "10", rotate: "extreme", timeLimit: 1.8, questions: 10, tolerance: 11, tag: "เนียนตา ±10% • หมุนรอบทิศ" },
+            { id: "4-4", title: "ด่าน 4-4", decoys: 3, scaleMode: "both", rotate: "extreme", timeLimit: 1.6, questions: 10, tolerance: 10, tag: "สุ่มเต็มขั้น • 1.6s" },
+            { id: "4-5", title: "ด่าน 4-5", decoys: 3, scaleMode: "both", rotate: "extreme", timeLimit: 1.4, questions: 10, tolerance: 10, tag: "ความเร็วสูง • 1.4s" },
+            { id: "4-6", title: "ด่าน 4-6", decoys: 3, scaleMode: "10", rotate: "extreme", timeLimit: 1.2, questions: 10, tolerance: 9, tag: "สายฟ้าแลบ • ±9px" },
+            { id: "4-7", title: "ด่าน 4-7", decoys: 3, scaleMode: "both", rotate: "extreme", timeLimit: 1.0, questions: 10, tolerance: 8, tag: "บอสใหญ่ 1.0s • ±8px" }
+          ]
+        }
+      ];
+
+      // --- STATE ---
+      const state = {
+        imageSource: "offline", // 'offline' | 'online'
+        mode: "game",           // 'game' | 'practice' | 'sandbox'
+        currentStageId: "1-1",
+        completedStages: {},
+
+        // Active session rules
+        decoys: 0,
+        scaleMode: "both",      // '10' | '20' | 'both'
+        rotateMode: "none",     // 'none' | 'random' | 'extreme'
+        timeLimit: 3.0,         // seconds (0 = unlimited)
+        totalQuestions: 10,     // 0 = unlimited
+        tolerance: 12,          // px tolerance on release
+        curvedMotion: true,     // true = curved & rotating main jigsaw motion
+
+        // Current round counters
+        questionIndex: 0,
+        passedCount: 0,
+        score: 0,
+        totalTimeSpent: 0,
+        sessionFinished: false,
+
+        // Active puzzle geometry
+        baseSize: 40,
+        startX: 36,
+        startY: 44,
+        currentX: 36,
+        currentY: 44,
+        currentAngle: 0,
+        targetX: 200,
+        targetY: 60,
+        targetAngle: 0,
+        curvePeakOffset: 0,
+        spinSpan: 0,
+        trueTabs: [1, -1, 1, 0],
+        decoyList: [],
+
+        // Interaction & Timer
+        isDragging: false,
+        dragStartClientX: 0,
+        dragStartSliderX: 0,
+        maxSlideX: 260,
+        locked: false,
+        puzzleStartTime: 0,
+        timerRaf: null,
+
+        // Practice scoreboard records
+        scoreboard: []
+      };
+
+      const STORAGE_KEY = "jigsaw_puzzler_save_v1";
+
+      function saveUserData() {
+        try {
+          const payload = {
+            imageSource: state.imageSource,
+            mode: state.mode,
+            currentStageId: state.currentStageId,
+            completedStages: state.completedStages,
+            scoreboard: state.scoreboard,
+            practiceSettings: {
+              difficulty: document.getElementById("pracDifficulty").value,
+              timeLimit: document.getElementById("pracTimeLimit").value,
+              testCount: document.getElementById("pracTestCount").value
+            },
+            sandboxSettings: {
+              decoyCount: document.getElementById("sbDecoyCount").value,
+              scaleMode: document.getElementById("sbDecoyScaleMode").value,
+              rotation: document.getElementById("sbDecoyRotation").value,
+              timeLimit: document.getElementById("sbTimeLimit").value,
+              tolerance: document.getElementById("sbTolerance").value,
+              testCount: document.getElementById("sbTestCount").value
+            }
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        } catch (err) {
+          // Ignore storage errors in restricted environments
+        }
+      }
+
+      function loadUserData() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const data = JSON.parse(raw);
+          if (!data || typeof data !== "object") return;
+
+          if (data.imageSource === "online" || data.imageSource === "offline") {
+            state.imageSource = data.imageSource;
+          }
+          if (data.mode === "game" || data.mode === "practice" || data.mode === "sandbox") {
+            state.mode = data.mode;
+          }
+          if (typeof data.currentStageId === "string" && data.currentStageId) {
+            state.currentStageId = data.currentStageId;
+          }
+          if (data.completedStages && typeof data.completedStages === "object") {
+            state.completedStages = data.completedStages;
+          }
+          if (Array.isArray(data.scoreboard)) {
+            state.scoreboard = data.scoreboard;
+          }
+          if (data.practiceSettings && typeof data.practiceSettings === "object") {
+            const ps = data.practiceSettings;
+            if (ps.difficulty) document.getElementById("pracDifficulty").value = ps.difficulty;
+            if (ps.timeLimit !== undefined) document.getElementById("pracTimeLimit").value = ps.timeLimit;
+            if (ps.testCount !== undefined) document.getElementById("pracTestCount").value = ps.testCount;
+          }
+          if (data.sandboxSettings && typeof data.sandboxSettings === "object") {
+            const ss = data.sandboxSettings;
+            if (ss.decoyCount !== undefined) document.getElementById("sbDecoyCount").value = ss.decoyCount;
+            if (ss.scaleMode) document.getElementById("sbDecoyScaleMode").value = ss.scaleMode;
+            if (ss.rotation) document.getElementById("sbDecoyRotation").value = ss.rotation;
+            if (ss.timeLimit !== undefined) document.getElementById("sbTimeLimit").value = ss.timeLimit;
+            if (ss.tolerance !== undefined) document.getElementById("sbTolerance").value = ss.tolerance;
+            if (ss.testCount !== undefined) document.getElementById("sbTestCount").value = ss.testCount;
+          }
+        } catch (err) {
+          // Ignore storage errors in restricted environments
+        }
+      }
+
+      // Detect mode from URL pathname (/jigsawpuzzler/game, /practice, /sandbox) or hash
+      function getModeFromUrl() {
+        try {
+          const path = (window.location.pathname || "").replace(/\/+$/, "").toLowerCase();
+          const lastSeg = path.split("/").pop();
+          if (lastSeg === "game" || lastSeg === "practice" || lastSeg === "sandbox") {
+            return lastSeg;
+          }
+          const hash = (window.location.hash || "").replace(/^#\/?/, "").toLowerCase();
+          if (hash === "game" || hash === "practice" || hash === "sandbox") {
+            return hash;
+          }
+        } catch (err) {
+          // Ignore URL read errors
+        }
+        return null;
+      }
+
+      // Update browser URL sub-directory (/.../game, /.../practice, /.../sandbox)
+      function syncUrlWithMode(mode, replace) {
+        try {
+          const loc = window.location;
+          if (loc.protocol === "http:" || loc.protocol === "https:") {
+            let basePath = (loc.pathname || "/").replace(/\/+$/, "");
+            basePath = basePath.replace(/\/(game|practice|sandbox|index\.html)$/i, "");
+            const nextPath = `${basePath}/${mode}`.replace(/\/{2,}/g, "/");
+            if (loc.pathname !== nextPath) {
+              if (replace) {
+                window.history.replaceState({ mode }, "", nextPath);
+              } else {
+                window.history.pushState({ mode }, "", nextPath);
+              }
+            }
+          }
+        } catch (err) {
+          // Fallback to hash if pushState across path is restricted in sandboxed iframe
+          try {
+            window.location.hash = `/${mode}`;
+          } catch (e) {}
+        }
+      }
+
+      // --- DOM ELEMENTS ---
+      const bgCanvas = document.getElementById("bgCanvas");
+      const bgCtx = bgCanvas.getContext("2d");
+      const pieceCanvas = document.getElementById("pieceCanvas");
+      const pieceCtx = pieceCanvas.getContext("2d");
+
+      const sliderTrack = document.getElementById("sliderTrack");
+      const sliderFill = document.getElementById("sliderFill");
+      const sliderHint = document.getElementById("sliderHint");
+      const sliderHandle = document.getElementById("sliderHandle");
+
+      const verifyBanner = document.getElementById("verifyBanner");
+      const verifyMsg = document.getElementById("verifyMsg");
+      const verifyDetail = document.getElementById("verifyDetail");
+
+      const roundProgressText = document.getElementById("roundProgressText");
+      const liveScoreText = document.getElementById("liveScoreText");
+      const timerDisplay = document.getElementById("timerDisplay");
+      const timerBar = document.getElementById("timerBar");
+      const decoysInfoBadge = document.getElementById("decoysInfoBadge");
+      const puzzleIdText = document.getElementById("puzzleIdText");
+
+      const resultSummaryBox = document.getElementById("resultSummaryBox");
+      const summaryHeadline = document.getElementById("summaryHeadline");
+      const sumScore = document.getElementById("sumScore");
+      const sumAccuracy = document.getElementById("sumAccuracy");
+      const sumAvgTime = document.getElementById("sumAvgTime");
+      const sumPassed = document.getElementById("sumPassed");
+      const btnPlayAgain = document.getElementById("btnPlayAgain");
+      const btnNextStage = document.getElementById("btnNextStage");
+
+      // --- UTILITY FUNCTIONS ---
+      function randInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function randItem(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function generateUuidLike() {
+        const hex = "0123456789abcdef";
+        const seg = (n) => Array.from({ length: n }, () => hex[randInt(0, 15)]).join("");
+        return `${seg(8)}-${seg(4)}-4${seg(3)}-${seg(4)}-${seg(12)}`;
+      }
+
+      // Generate random jigsaw 4-side tab configuration: 1 = out tab, -1 = in blank, 0 = flat
+      function randomTabs(excludeConfig) {
+        let tabs;
+        let tries = 0;
+        do {
+          tabs = [
+            randItem([-1, 0, 1]),
+            randItem([-1, 1]),
+            randItem([-1, 0, 1]),
+            randItem([-1, 1])
+          ];
+          // Ensure at least two non-flat sides so it looks unmistakably like a jigsaw piece
+          const nonZero = tabs.filter((t) => t !== 0).length;
+          if (nonZero < 2) {
+            tabs[0] = 1;
+            tabs[1] = -1;
+          }
+          tries++;
+        } while (
+          excludeConfig &&
+          tabs.join(",") === excludeConfig.join(",") &&
+          tries < 20
+        );
+        return tabs;
+      }
+
+      // Trace a jigsaw puzzle path centered at (cx, cy) with side length `size` and rotation `angleRad`
+      function traceJigsawPath(ctx, cx, cy, size, tabs, angleRad) {
+        const s = size;
+        const half = s / 2;
+        const r = s * 0.15; // tab radius
+        const neck = s * 0.09;
+
+        // Helper to transform local (lx, ly) around center (cx, cy)
+        const cos = Math.cos(angleRad || 0);
+        const sin = Math.sin(angleRad || 0);
+        function pt(lx, ly) {
+          return [cx + lx * cos - ly * sin, cy + lx * sin + ly * cos];
+        }
+
+        // Draw one edge from (-half, -half) to (+half, -half) rotated for each side 0..3
+        ctx.beginPath();
+        for (let side = 0; side < 4; side++) {
+          const sideAngle = (side * Math.PI) / 2;
+          const sCos = Math.cos(sideAngle);
+          const sSin = Math.sin(sideAngle);
+
+          // Map edge-local (ex, ey) where edge runs from (-half, -half) -> (half, -half)
+          const mapEdge = (ex, ey) => {
+            const rx = ex * sCos - ey * sSin;
+            const ry = ex * sSin + ey * sCos;
+            return pt(rx, ry);
+          };
+
+          const tabDir = tabs[side]; // 1 = outward, -1 = inward, 0 = flat
+          const [p0x, p0y] = mapEdge(-half, -half);
+          if (side === 0) {
+            ctx.moveTo(p0x, p0y);
+          } else {
+            ctx.lineTo(p0x, p0y);
+          }
+
+          if (tabDir === 0) {
+            const [p1x, p1y] = mapEdge(half, -half);
+            ctx.lineTo(p1x, p1y);
+          } else {
+            const d = -tabDir; // outward is negative Y on top edge
+            const [n1x, n1y] = mapEdge(-neck, -half);
+            ctx.lineTo(n1x, n1y);
+
+            // Bezier curve forming classic jigsaw knob
+            const [c1x, c1y] = mapEdge(-neck * 0.8, -half + d * r * 0.8);
+            const [c2x, c2y] = mapEdge(-r * 1.35, -half + d * r * 1.9);
+            const [topX, topY] = mapEdge(0, -half + d * r * 1.95);
+            ctx.bezierCurveTo(c1x, c1y, c2x, c2y, topX, topY);
+
+            const [c3x, c3y] = mapEdge(r * 1.35, -half + d * r * 1.9);
+            const [c4x, c4y] = mapEdge(neck * 0.8, -half + d * r * 0.8);
+            const [n2x, n2y] = mapEdge(neck, -half);
+            ctx.bezierCurveTo(c3x, c3y, c4x, c4y, n2x, n2y);
+
+            const [p1x, p1y] = mapEdge(half, -half);
+            ctx.lineTo(p1x, p1y);
+          }
+        }
+        ctx.closePath();
+      }
+
+      // --- PROCEDURAL OFFLINE ARTWORK GENERATOR (Inspired by reference images) ---
+      function drawOfflineScene(ctx, w, h) {
+        const themes = ["karstRiver", "autumnForest", "sunsetIslands", "goldenMeadow"];
+        const theme = randItem(themes);
+
+        if (theme === "karstRiver") {
+          // Guilin karst mountains & winding river (like image 1)
+          const sky = ctx.createLinearGradient(0, 0, 0, h);
+          sky.addColorStop(0, "#cfe4ee");
+          sky.addColorStop(0.5, "#7ea892");
+          sky.addColorStop(1, "#2a5235");
+          ctx.fillStyle = sky;
+          ctx.fillRect(0, 0, w, h);
+
+          // Distant karst peaks
+          for (let i = 0; i < 14; i++) {
+            const px = (i / 13) * w + randInt(-12, 12);
+            const pw = randInt(36, 68);
+            const ph = randInt(55, 115);
+            const py = h * 0.62;
+            const grad = ctx.createLinearGradient(px, py - ph, px, py);
+            grad.addColorStop(0, `hsl(${randInt(115, 138)}, 28%, ${randInt(32, 46)}%)`);
+            grad.addColorStop(1, `hsl(${randInt(115, 138)}, 36%, ${randInt(20, 30)}%)`);
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.moveTo(px - pw / 2, py);
+            ctx.quadraticCurveTo(px, py - ph * 1.3, px + pw / 2, py);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          // Winding river
+          ctx.fillStyle = "#c2d6dc";
+          ctx.beginPath();
+          ctx.moveTo(w * 0.15, h * 0.45);
+          ctx.bezierCurveTo(w * 0.45, h * 0.6, w * 0.1, h * 0.85, w * 0.38, h);
+          ctx.lineTo(w * 0.72, h);
+          ctx.bezierCurveTo(w * 0.45, h * 0.8, w * 0.68, h * 0.58, w * 0.3, h * 0.45);
+          ctx.closePath();
+          ctx.fill();
+
+          // Foreground lush hills
+          for (let i = 0; i < 8; i++) {
+            ctx.fillStyle = `hsl(${randInt(108, 128)}, 45%, ${randInt(18, 28)}%)`;
+            ctx.beginPath();
+            ctx.arc(randInt(0, w), randInt(h * 0.65, h), randInt(24, 52), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else if (theme === "autumnForest") {
+          // Golden-orange autumn trees (like image 4)
+          const bg = ctx.createLinearGradient(0, 0, 0, h);
+          bg.addColorStop(0, "#f3c06b");
+          bg.addColorStop(0.7, "#b65318");
+          bg.addColorStop(1, "#5c2e14");
+          ctx.fillStyle = bg;
+          ctx.fillRect(0, 0, w, h);
+
+          // Foliage clusters
+          for (let i = 0; i < 75; i++) {
+            const colors = ["#d97706", "#b45309", "#f59e0b", "#9a3412", "#eab308", "#78350f"];
+            ctx.fillStyle = randItem(colors);
+            ctx.globalAlpha = 0.75;
+            ctx.beginPath();
+            ctx.arc(randInt(0, w), randInt(0, h * 0.82), randInt(10, 28), 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+
+          // Tree trunks
+          for (let t = 0; t < 9; t++) {
+            const tx = randInt(15, w - 15);
+            ctx.strokeStyle = "#2b1810";
+            ctx.lineWidth = randInt(3, 7);
+            ctx.beginPath();
+            ctx.moveTo(tx, h * 0.92);
+            ctx.lineTo(tx + randInt(-8, 8), randInt(15, h * 0.45));
+            ctx.stroke();
+          }
+        } else if (theme === "sunsetIslands") {
+          // Dramatic sunset sky & sea islands (like image 3)
+          const sky = ctx.createLinearGradient(0, 0, 0, h);
+          sky.addColorStop(0, "#101b33");
+          sky.addColorStop(0.38, "#f39c6b");
+          sky.addColorStop(0.62, "#ffdf9e");
+          sky.addColorStop(0.75, "#195370");
+          sky.addColorStop(1, "#0d2233");
+          ctx.fillStyle = sky;
+          ctx.fillRect(0, 0, w, h);
+
+          // Silhouetted island ridges
+          for (let i = 0; i < 5; i++) {
+            const baseY = h * (0.66 + i * 0.07);
+            ctx.fillStyle = `rgba(12, 26, 44, ${0.55 + i * 0.1})`;
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+            ctx.lineTo(0, baseY);
+            for (let x = 0; x <= w; x += 32) {
+              ctx.lineTo(x, baseY + randInt(-12, 8));
+            }
+            ctx.lineTo(w, h);
+            ctx.closePath();
+            ctx.fill();
+          }
+        } else {
+          // Golden meadow with grazing flock (like image 2)
+          const sky = ctx.createLinearGradient(0, 0, 0, h * 0.45);
+          sky.addColorStop(0, "#f5e3c8");
+          sky.addColorStop(1, "#e8c595");
+          ctx.fillStyle = sky;
+          ctx.fillRect(0, 0, w, h * 0.45);
+
+          // Dark tree line
+          ctx.fillStyle = "#222918";
+          ctx.beginPath();
+          ctx.moveTo(0, h * 0.48);
+          for (let x = 0; x <= w; x += 18) {
+            ctx.lineTo(x, h * 0.32 + randInt(-6, 8));
+          }
+          ctx.lineTo(w, h * 0.52);
+          ctx.closePath();
+          ctx.fill();
+
+          // Warm golden pasture
+          const field = ctx.createLinearGradient(0, h * 0.45, 0, h);
+          field.addColorStop(0, "#5c6e46");
+          field.addColorStop(0.28, "#d49b4b");
+          field.addColorStop(1, "#8f5b22");
+          ctx.fillStyle = field;
+          ctx.fillRect(0, h * 0.45, w, h * 0.55);
+
+          // Silhouetted sheep shapes
+          for (let s = 0; s < 6; s++) {
+            const sx = 35 + s * 46 + randInt(-8, 8);
+            const sy = h * 0.72 + randInt(-4, 5);
+            ctx.fillStyle = "#231c14";
+            ctx.beginPath();
+            ctx.ellipse(sx, sy, 13, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(sx - 9, sy + 5, 2.5, 7);
+            ctx.fillRect(sx + 6, sy + 5, 2.5, 7);
+          }
+        }
+      }
+
+      // Load either Online random photo or Offline procedural scene onto an offscreen canvas
+      const masterCanvas = document.createElement("canvas");
+      masterCanvas.width = 320;
+      masterCanvas.height = 176;
+      const masterCtx = masterCanvas.getContext("2d");
+
+      function prepareBackgroundImage(callback) {
+        if (state.imageSource === "online") {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          const seed = randInt(1, 999999);
+          let settled = false;
+          const timeoutId = setTimeout(() => {
+            if (!settled) {
+              settled = true;
+              drawOfflineScene(masterCtx, 320, 176);
+              callback();
+            }
+          }, 2200);
+
+          img.onload = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
+            masterCtx.drawImage(img, 0, 0, 320, 176);
+            callback();
+          };
+          img.onerror = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
+            drawOfflineScene(masterCtx, 320, 176);
+            callback();
+          };
+          img.src = `about:invalid#zPythonSafez`;
+        } else {
+          drawOfflineScene(masterCtx, 320, 176);
+          callback();
+        }
+      }
+
+      // Shuffle array helper (Fisher-Yates)
+      function shuffleArray(arr) {
+        const copy = arr.slice();
+        for (let i = copy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const tmp = copy[i];
+          copy[i] = copy[j];
+          copy[j] = tmp;
+        }
+        return copy;
+      }
+
+      // Pick unique decoy scales so every decoy and the true piece (1.0) have strictly different sizes
+      function pickUniqueDecoyScales(count, scaleMode) {
+        const tenGroup = shuffleArray([0.9, 1.1]);
+        const twentyGroup = shuffleArray([0.8, 1.2]);
+        let orderedPool;
+        if (scaleMode === "10") {
+          orderedPool = [...tenGroup, ...twentyGroup];
+        } else if (scaleMode === "20") {
+          orderedPool = [...twentyGroup, ...tenGroup];
+        } else {
+          orderedPool = shuffleArray([0.8, 0.9, 1.1, 1.2]);
+        }
+        return orderedPool.slice(0, count);
+      }
+
+      // Outer bounding radius of a jigsaw piece of size `sz` including protruding tabs at any angle
+      function getPieceOuterRadius(sz) {
+        return sz * 0.78;
+      }
+
+      // Compute curved Y position and rotation angle of main jigsaw piece for a given X
+      function updateMainPiecePose(xVal) {
+        state.currentX = xVal;
+        const spanX = Math.max(20, state.targetX - state.startX);
+        const u = (xVal - state.startX) / spanX; // 0 at startX, 1 at targetX
+        const linearY = state.startY + (state.targetY - state.startY) * u;
+        const arcY = Math.sin(u * Math.PI) * state.curvePeakOffset;
+        state.currentY = Math.max(28, Math.min(176 - 28, linearY + arcY));
+        state.currentAngle = state.targetAngle + (1 - u) * state.spinSpan;
+      }
+
+      // --- GENERATE NEW PUZZLE ---
+      function generatePuzzle() {
+        stopTimer();
+        state.locked = false;
+        state.curvedMotion = true; // Always active across all modes
+        verifyBanner.className = "verify-banner";
+        sliderTrack.className = "slider-container";
+        sliderHint.style.opacity = "1";
+        puzzleIdText.textContent = "ID: " + generateUuidLike();
+
+        const w = 320;
+        const h = 176;
+        const s = state.baseSize; // 40px
+        const trueOuterR = getPieceOuterRadius(s);
+        const minGap = 7; // Clear visual separation between outermost tabs of any two pieces
+
+        const decoyCount = Math.min(3, Math.max(0, state.decoys));
+        const uniqueScales = pickUniqueDecoyScales(decoyCount, state.scaleMode);
+
+        // Try random non-overlapping layouts first; fall back to well-separated slots if needed
+        let layoutSuccess = false;
+        let placedDecoys = [];
+
+        for (let layoutTry = 0; layoutTry < 50; layoutTry++) {
+          state.startX = 36;
+          state.targetX = randInt(136, w - 42);
+          state.targetY = randInt(40, h - 40);
+          state.startY = state.targetY > h / 2 ? randInt(38, 54) : randInt(h - 54, h - 38);
+
+          // Ensure start piece and true target hole never touch or overlap
+          if (
+            Math.hypot(state.startX - state.targetX, state.startY - state.targetY) <
+            trueOuterR * 2 + minGap
+          ) {
+            continue;
+          }
+
+          const occupied = [
+            { x: state.startX, y: state.startY, outerR: trueOuterR },
+            { x: state.targetX, y: state.targetY, outerR: trueOuterR }
+          ];
+
+          const candidateDecoys = [];
+          let allDecoysPlaced = true;
+
+          for (let i = 0; i < decoyCount; i++) {
+            const scale = uniqueScales[i];
+            const decoySize = s * scale;
+            const decoyOuterR = getPieceOuterRadius(decoySize);
+            const margin = Math.ceil(decoyOuterR) + 2;
+
+            let foundSpot = false;
+            let dx = 0;
+            let dy = 0;
+
+            for (let attempt = 0; attempt < 180; attempt++) {
+              const candX = randInt(Math.max(92, margin), w - margin);
+              const candY = randInt(margin, h - margin);
+              const collides = occupied.some(
+                (p) => Math.hypot(p.x - candX, p.y - candY) < p.outerR + decoyOuterR + minGap
+              );
+              if (!collides) {
+                dx = candX;
+                dy = candY;
+                foundSpot = true;
+                break;
+              }
+            }
+
+            if (!foundSpot) {
+              allDecoysPlaced = false;
+              break;
+            }
+
+            occupied.push({ x: dx, y: dy, outerR: decoyOuterR });
+            candidateDecoys.push({ x: dx, y: dy, scale, size: decoySize });
+          }
+
+          if (allDecoysPlaced) {
+            placedDecoys = candidateDecoys;
+            layoutSuccess = true;
+            break;
+          }
+        }
+
+        // Guaranteed non-overlapping fallback slots if random tries ever crowd
+        if (!layoutSuccess) {
+          const topStart = Math.random() < 0.5;
+          state.startX = 36;
+          state.startY = topStart ? 42 : 134;
+
+          const fallbackSlots = shuffleArray([
+            { x: 118, y: 42 },
+            { x: 122, y: 134 },
+            { x: 200, y: 42 },
+            { x: 204, y: 134 },
+            { x: 278, y: 88 }
+          ]);
+
+          const targetSlot = fallbackSlots[0];
+          state.targetX = targetSlot.x;
+          state.targetY = targetSlot.y;
+
+          placedDecoys = [];
+          for (let i = 0; i < decoyCount; i++) {
+            const slot = fallbackSlots[i + 1];
+            const scale = uniqueScales[i];
+            placedDecoys.push({
+              x: slot.x,
+              y: slot.y,
+              scale,
+              size: s * scale
+            });
+          }
+        }
+
+        state.trueTabs = randomTabs(null);
+        const midY = (state.startY + state.targetY) / 2;
+        state.curvePeakOffset = midY > h / 2 ? randInt(-34, -20) : randInt(20, 34);
+        state.targetAngle = (randItem([-28, -20, -14, 14, 20, 28]) * Math.PI) / 180;
+        const spinDeg = randItem([-1, 1]) * randInt(135, 225);
+        state.spinSpan = (spinDeg * Math.PI) / 180;
+
+        updateMainPiecePose(state.startX);
+
+        // Build final decoy objects with distinct shapes, rotations, and strictly unique sizes
+        const usedTabConfigs = [state.trueTabs.join(",")];
+        const decoys = placedDecoys.map((d) => {
+          let decoyTabs = randomTabs(state.trueTabs);
+          let tries = 0;
+          while (usedTabConfigs.includes(decoyTabs.join(",")) && tries < 25) {
+            decoyTabs = randomTabs(state.trueTabs);
+            tries++;
+          }
+          usedTabConfigs.push(decoyTabs.join(","));
+
+          let angleDeg = 0;
+          if (state.rotateMode === "random") {
+            angleDeg = randItem([-35, -25, -18, 18, 25, 35]);
+          } else if (state.rotateMode === "extreme") {
+            angleDeg = randInt(20, 340);
+          }
+          const angleRad = (angleDeg * Math.PI) / 180;
+
+          return {
+            x: d.x,
+            y: d.y,
+            size: d.size,
+            scalePct: Math.round((d.scale - 1) * 100),
+            tabs: decoyTabs,
+            angleRad,
+            angleDeg
+          };
+        });
+
+        state.decoyList = decoys;
+
+        // Update badge info
+        if (decoyCount === 0) {
+          decoysInfoBadge.textContent = `ตัวหลอก: 0 ตัว | โค้ง+หมุน | ±${state.tolerance}px`;
+        } else {
+          const scalesText = decoys
+            .map((d) => (d.scalePct > 0 ? `+${d.scalePct}%` : `${d.scalePct}%`))
+            .join(", ");
+          decoysInfoBadge.textContent = `ตัวหลอก: ${decoyCount} (${scalesText}) | โค้ง+หมุน | ±${state.tolerance}px`;
+        }
+
+        prepareBackgroundImage(() => {
+          renderPuzzleCanvases();
+          updateSliderUI(0);
+          startTimer();
+          updateTopStatus();
+        });
+      }
+
+      function renderPuzzleCanvases() {
+        const w = 320;
+        const h = 176;
+        const s = state.baseSize;
+
+        // 1. Draw main background
+        bgCtx.clearRect(0, 0, w, h);
+        bgCtx.drawImage(masterCanvas, 0, 0, w, h);
+
+        // 2. Draw Decoy Jigsaw Holes (different shape, position, rotation, and ±10%/20% scale)
+        state.decoyList.forEach((decoy) => {
+          bgCtx.save();
+          traceJigsawPath(bgCtx, decoy.x, decoy.y, decoy.size, decoy.tabs, decoy.angleRad);
+          bgCtx.fillStyle = "rgba(0, 0, 0, 0.58)";
+          bgCtx.fill();
+          bgCtx.lineWidth = 1.5;
+          bgCtx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+          bgCtx.stroke();
+          bgCtx.restore();
+        });
+
+        // 3. Draw True Target Hole (rotated by targetAngle when curvedMotion is active)
+        bgCtx.save();
+        traceJigsawPath(bgCtx, state.targetX, state.targetY, s, state.trueTabs, state.targetAngle);
+        bgCtx.fillStyle = "rgba(0, 0, 0, 0.62)";
+        bgCtx.fill();
+        bgCtx.lineWidth = 1.5;
+        bgCtx.strokeStyle = "rgba(255, 255, 255, 0.55)";
+        bgCtx.stroke();
+        bgCtx.restore();
+
+        // 4. Draw Floating Movable Piece on pieceCanvas
+        drawFloatingPiece();
+      }
+
+      function drawFloatingPiece() {
+        const w = 320;
+        const h = 176;
+        const s = state.baseSize;
+
+        pieceCtx.clearRect(0, 0, w, h);
+
+        // Draw clipped & rotated cutout from masterCanvas at (currentX, currentY) with currentAngle
+        pieceCtx.save();
+        pieceCtx.shadowColor = "rgba(0, 0, 0, 0.65)";
+        pieceCtx.shadowBlur = 6;
+        pieceCtx.shadowOffsetX = 1;
+        pieceCtx.shadowOffsetY = 2;
+
+        pieceCtx.translate(state.currentX, state.currentY);
+        pieceCtx.rotate(state.currentAngle - state.targetAngle);
+        traceJigsawPath(pieceCtx, 0, 0, s, state.trueTabs, state.targetAngle);
+        pieceCtx.clip();
+
+        // Draw master image so texture from (targetX, targetY) rotates together with the piece
+        pieceCtx.drawImage(masterCanvas, -state.targetX, -state.targetY, w, h);
+        pieceCtx.restore();
+
+        // Draw crisp white/glowing outline around floating piece
+        pieceCtx.save();
+        traceJigsawPath(pieceCtx, state.currentX, state.currentY, s, state.trueTabs, state.currentAngle);
+        pieceCtx.lineWidth = 2;
+        pieceCtx.strokeStyle = "rgba(255, 255, 255, 0.92)";
+        pieceCtx.stroke();
+        pieceCtx.restore();
+      }
+
+      // --- TIMER LOGIC ---
+      function startTimer() {
+        stopTimer();
+        state.puzzleStartTime = performance.now();
+
+        if (!state.timeLimit || state.timeLimit <= 0) {
+          timerDisplay.textContent = "ไม่จำกัดเวลา";
+          timerDisplay.classList.remove("urgent");
+          timerBar.style.width = "100%";
+          return;
+        }
+
+        const limitMs = state.timeLimit * 1000;
+        function tick(now) {
+          const elapsed = now - state.puzzleStartTime;
+          const remaining = Math.max(0, limitMs - elapsed);
+          const sec = (remaining / 1000).toFixed(2);
+          timerDisplay.textContent = `${sec}s`;
+          timerDisplay.classList.toggle("urgent", remaining <= 1000);
+          timerBar.style.width = `${(remaining / limitMs) * 100}%`;
+
+          if (remaining <= 0) {
+            handleVerification(true); // Time out!
+            return;
+          }
+          state.timerRaf = requestAnimationFrame(tick);
+        }
+        state.timerRaf = requestAnimationFrame(tick);
+      }
+
+      function stopTimer() {
+        if (state.timerRaf) {
+          cancelAnimationFrame(state.timerRaf);
+          state.timerRaf = null;
+        }
+      }
+
+      // --- SLIDER & VERIFICATION ON EVERY RELEASE ---
+      function updateSliderUI(offsetPx) {
+        const trackRect = sliderTrack.getBoundingClientRect();
+        const handleWidth = 48;
+        const maxTrack = Math.max(180, trackRect.width - handleWidth - 4);
+        state.maxSlideX = maxTrack;
+
+        const clamped = Math.max(0, Math.min(maxTrack, offsetPx));
+        sliderHandle.style.transform = `translateX(${clamped}px)`;
+        sliderFill.style.width = `${clamped + handleWidth / 2}px`;
+
+        // Map slider offset to canvas X coordinate
+        const usableCanvasRange = 320 - 34 - state.baseSize;
+        const ratio = clamped / maxTrack;
+        updateMainPiecePose(state.startX + ratio * usableCanvasRange);
+        sliderHandle.setAttribute("aria-valuenow", Math.round(ratio * 100));
+
+        drawFloatingPiece();
+      }
+
+      function handleVerification(isTimeout) {
+        if (state.locked || state.sessionFinished) return;
+        state.locked = true;
+        state.isDragging = false;
+        stopTimer();
+
+        const elapsedSec = Math.max(0.05, (performance.now() - state.puzzleStartTime) / 1000);
+        const distanceError = Math.abs(state.currentX - state.targetX);
+        const passed = !isTimeout && distanceError <= state.tolerance;
+
+        state.questionIndex++;
+        state.totalTimeSpent += elapsedSec;
+
+        if (passed) {
+          state.passedCount++;
+          updateMainPiecePose(state.targetX);
+          drawFloatingPiece();
+
+          // Calculate points based on accuracy + speed + decoy difficulty
+          const speedBonus = Math.max(10, Math.round(100 - elapsedSec * 25));
+          const decoyBonus = state.decoys * 35;
+          const precisionBonus = Math.max(0, Math.round((state.tolerance - distanceError) * 5));
+          const gained = 100 + speedBonus + decoyBonus + precisionBonus;
+          state.score += gained;
+
+          verifyBanner.className = "verify-banner pass show";
+          verifyMsg.textContent = `✓ ยืนยันสำเร็จ! (+${gained} คะแนน)`;
+          verifyDetail.textContent = `${elapsedSec.toFixed(2)}s (คลาดเคลื่อน ${Math.round(distanceError)}px)`;
+          sliderTrack.className = "slider-container pass";
+        } else {
+          verifyBanner.className = "verify-banner fail show";
+          if (isTimeout) {
+            verifyMsg.textContent = "✗ หมดเวลา!";
+            verifyDetail.textContent = `เกิน ${state.timeLimit.toFixed(1)}s`;
+          } else {
+            verifyMsg.textContent = "✗ ตำแหน่งไม่ตรงตัวจริง";
+            verifyDetail.textContent = `ห่าง ${Math.round(distanceError)}px (เกณฑ์ ±${state.tolerance}px)`;
+          }
+          sliderTrack.className = "slider-container fail";
+        }
+
+        updateTopStatus();
+
+        // Check if reached totalQuestions limit
+        const reachedLimit =
+          state.totalQuestions > 0 && state.questionIndex >= state.totalQuestions;
+
+        setTimeout(() => {
+          if (reachedLimit) {
+            finishSession();
+          } else {
+            generatePuzzle();
+          }
+        }, 900);
+      }
+
+      function updateTopStatus() {
+        if (state.totalQuestions > 0) {
+          const currentNum = Math.min(state.totalQuestions, state.questionIndex + (state.locked ? 0 : 1));
+          roundProgressText.textContent = `ข้อที่ ${currentNum} / ${state.totalQuestions}`;
+        } else {
+          roundProgressText.textContent = `ข้อที่ ${state.questionIndex + (state.locked ? 0 : 1)} (สุ่มไม่จำกัด)`;
+        }
+        liveScoreText.textContent = `คะแนน: ${state.score} (ผ่าน ${state.passedCount}/${state.questionIndex})`;
+      }
+
+      // --- FINISH SESSION & SHOW SCORE ---
+      function finishSession() {
+        stopTimer();
+        state.sessionFinished = true;
+        state.locked = true;
+
+        const attempted = state.questionIndex;
+        const accuracy = attempted > 0 ? Math.round((state.passedCount / attempted) * 100) : 0;
+        const avgTime = attempted > 0 ? (state.totalTimeSpent / attempted).toFixed(2) : "0.00";
+
+        sumScore.textContent = state.score.toLocaleString();
+        sumAccuracy.textContent = `${accuracy}%`;
+        sumAvgTime.textContent = `${avgTime}s`;
+        sumPassed.textContent = `${state.passedCount} / ${attempted}`;
+
+        resultSummaryBox.classList.remove("hidden");
+        btnNextStage.classList.add("hidden");
+
+        if (state.mode === "game") {
+          const stageCleared = attempted > 0 && state.passedCount >= Math.ceil(attempted * 0.6);
+          summaryHeadline.textContent = stageCleared
+            ? `🎉 ผ่านด่าน ${state.currentStageId} สำเร็จ!`
+            : `สรุปผลด่าน ${state.currentStageId} (ต้องการผ่านอย่างน้อย 60%)`;
+
+          if (stageCleared) {
+            state.completedStages[state.currentStageId] = true;
+            saveUserData();
+            renderChaptersUI();
+            const nextId = getNextStageId(state.currentStageId);
+            if (nextId) {
+              btnNextStage.classList.remove("hidden");
+              btnNextStage.onclick = () => selectGameStage(nextId);
+            }
+          }
+        } else if (state.mode === "practice") {
+          summaryHeadline.textContent = "📊 สรุปผลคะแนนโหมด Practice";
+          if (attempted > 0) {
+            recordPracticeScoreboard(attempted, accuracy, avgTime);
+          }
+        } else {
+          summaryHeadline.textContent = "🛠️ สรุปผลการทดสอบโหมด Sandbox";
+        }
+      }
+
+      function recordPracticeScoreboard(attempted, accuracy, avgTime) {
+        const diffSelect = document.getElementById("pracDifficulty");
+        const diffLabel = diffSelect.options[diffSelect.selectedIndex].text.split(" ")[0];
+        const timeLabel = state.timeLimit > 0 ? `${state.timeLimit}s` : "ไม่จำกัด";
+
+        state.scoreboard.unshift({
+          round: state.scoreboard.length + 1,
+          diffLabel,
+          timeLabel,
+          passedText: `${state.passedCount}/${attempted} (${accuracy}%)`,
+          avgTime: `${avgTime}s`,
+          score: state.score
+        });
+
+        saveUserData();
+        renderScoreboard();
+      }
+
+      function renderScoreboard() {
+        const tbody = document.getElementById("scoreboardBody");
+        if (state.scoreboard.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="empty-state">ยังไม่มีสถิติการซ้อม ลองเลื่อนจิ๊กซอว์แล้วกด "หยุดเล่น &amp; สรุปคะแนน" เพื่อบันทึกสถิติ</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = state.scoreboard
+          .map(
+            (row) => `
+          <tr>
+            <td>#${row.round}</td>
+            <td>${row.diffLabel}</td>
+            <td>${row.timeLabel}</td>
+            <td class="num">${row.passedText}</td>
+            <td class="num">${row.avgTime}</td>
+            <td class="num"><strong>${row.score.toLocaleString()}</strong></td>
+          </tr>
+        `
+          )
+          .join("");
+      }
+
+      // --- POINTER / TOUCH EVENTS FOR MOBILE & DESKTOP ---
+      function onDragStart(clientX) {
+        if (state.locked || state.sessionFinished) return;
+        state.isDragging = true;
+        state.dragStartClientX = clientX;
+        sliderHint.style.opacity = "0";
+      }
+
+      function onDragMove(clientX) {
+        if (!state.isDragging || state.locked) return;
+        const deltaX = clientX - state.dragStartClientX;
+        updateSliderUI(deltaX);
+      }
+
+      function onDragEnd() {
+        if (!state.isDragging || state.locked) return;
+        state.isDragging = false;
+        handleVerification(false); // Verify immediately on release!
+      }
+
+      sliderHandle.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        onDragStart(e.clientX);
+      });
+      window.addEventListener("mousemove", (e) => onDragMove(e.clientX));
+      window.addEventListener("mouseup", () => onDragEnd());
+
+      sliderHandle.addEventListener(
+        "touchstart",
+        (e) => {
+          if (e.touches.length > 0) {
+            onDragStart(e.touches[0].clientX);
+          }
+        },
+        { passive: true }
+      );
+      window.addEventListener(
+        "touchmove",
+        (e) => {
+          if (state.isDragging && e.touches.length > 0) {
+            onDragMove(e.touches[0].clientX);
+          }
+        },
+        { passive: true }
+      );
+      window.addEventListener("touchend", () => onDragEnd());
+      window.addEventListener("touchcancel", () => onDragEnd());
+
+      // --- MODE MANAGEMENT ---
+      function resetSessionCounters() {
+        state.questionIndex = 0;
+        state.passedCount = 0;
+        state.score = 0;
+        state.totalTimeSpent = 0;
+        state.sessionFinished = false;
+        resultSummaryBox.classList.add("hidden");
+      }
+
+      function getNextStageId(currentId) {
+        const flat = [];
+        CHAPTERS.forEach((ch) => ch.stages.forEach((st) => flat.push(st.id)));
+        const idx = flat.indexOf(currentId);
+        return idx >= 0 && idx + 1 < flat.length ? flat[idx + 1] : null;
+      }
+
+      function selectGameStage(stageId) {
+        let foundStage = null;
+        let foundChapter = null;
+        CHAPTERS.forEach((ch) => {
+          ch.stages.forEach((st) => {
+            if (st.id === stageId) {
+              foundStage = st;
+              foundChapter = ch;
+            }
+          });
+        });
+        if (!foundStage) return;
+
+        state.currentStageId = foundStage.id;
+        state.decoys = foundStage.decoys;
+        state.scaleMode = foundStage.scaleMode;
+        state.rotateMode = foundStage.rotate;
+        state.timeLimit = foundStage.timeLimit;
+        state.totalQuestions = foundStage.questions;
+        state.tolerance = foundStage.tolerance;
+        state.curvedMotion = true;
+
+        document.getElementById("gameStatusBadge").textContent =
+          `Chapter ${foundChapter.id} - ${foundStage.title} (${foundStage.timeLimit.toFixed(1)}s)`;
+
+        saveUserData();
+        renderChaptersUI();
+        resetSessionCounters();
+        generatePuzzle();
+      }
+
+      function renderChaptersUI() {
+        const container = document.getElementById("chapterListContainer");
+        container.innerHTML = CHAPTERS.map(
+          (ch) => `
+          <div class="chapter-box">
+            <div class="chapter-header">
+              <div>
+                <div class="chapter-name">${ch.name}</div>
+                <div class="chapter-desc">${ch.desc}</div>
+              </div>
+            </div>
+            <div class="stage-grid">
+              ${ch.stages
+                .map((st) => {
+                  const isActive = state.currentStageId === st.id;
+                  const isDone = !!state.completedStages[st.id];
+                  return `
+                  <button type="button" class="stage-btn ${isActive ? "active" : ""} ${isDone ? "completed" : ""}" data-stage="${st.id}">
+                    <div class="stage-top">
+                      <span>${st.title}</span>
+                      <span>${isDone ? "✅" : `⏱ ${st.timeLimit.toFixed(1)}s`}</span>
+                    </div>
+                    <div class="stage-meta">
+                      ตัวหลอก ${st.decoys} ตัว • ${st.questions} ข้อ<br>
+                      <span style="color:var(--brand); font-weight:600;">${st.tag || ""}</span>
+                    </div>
+                  </button>
+                `;
+                })
+                .join("")}
+            </div>
+          </div>
+        `
+        ).join("");
+
+        container.querySelectorAll(".stage-btn").forEach((btn) => {
+          btn.addEventListener("click", () => selectGameStage(btn.dataset.stage));
+        });
+      }
+
+      function applyPracticeSettings() {
+        const diff = document.getElementById("pracDifficulty").value;
+        const timeLim = parseFloat(document.getElementById("pracTimeLimit").value);
+        const testCnt = parseInt(document.getElementById("pracTestCount").value, 10);
+
+        if (diff === "easy") {
+          state.decoys = 0;
+          state.scaleMode = "10";
+          state.rotateMode = "none";
+          state.tolerance = 14;
+        } else if (diff === "medium") {
+          state.decoys = 1;
+          state.scaleMode = "10";
+          state.rotateMode = "random";
+          state.tolerance = 12;
+        } else if (diff === "hard") {
+          state.decoys = 2;
+          state.scaleMode = "both";
+          state.rotateMode = "random";
+          state.tolerance = 11;
+        } else {
+          state.decoys = 3;
+          state.scaleMode = "both";
+          state.rotateMode = "extreme";
+          state.tolerance = 10;
+        }
+
+        state.timeLimit = timeLim;
+        state.totalQuestions = testCnt;
+        state.curvedMotion = true;
+        saveUserData();
+        resetSessionCounters();
+        generatePuzzle();
+      }
+
+      function applySandboxSettings() {
+        const decoys = parseInt(document.getElementById("sbDecoyCount").value, 10);
+        const scaleMode = document.getElementById("sbDecoyScaleMode").value;
+        const rotateMode = document.getElementById("sbDecoyRotation").value;
+        const timeLimit = parseFloat(document.getElementById("sbTimeLimit").value);
+        const tolerance = parseInt(document.getElementById("sbTolerance").value, 10);
+        const testCount = parseInt(document.getElementById("sbTestCount").value, 10);
+
+        document.getElementById("sbDecoyCountVal").textContent = `${decoys} ตัว`;
+        document.getElementById("sbTimeLimitVal").textContent =
+          timeLimit === 0 ? "ไม่จำกัด" : `${timeLimit.toFixed(1)} วินาที`;
+        document.getElementById("sbToleranceVal").textContent = `±${tolerance} px`;
+
+        state.decoys = decoys;
+        state.scaleMode = scaleMode;
+        state.rotateMode = rotateMode;
+        state.timeLimit = timeLimit;
+        state.tolerance = tolerance;
+        state.totalQuestions = testCount;
+        state.curvedMotion = true;
+
+        saveUserData();
+        resetSessionCounters();
+        generatePuzzle();
+      }
+
+      function activateMode(mode, replaceHistory) {
+        const validMode = mode === "practice" || mode === "sandbox" ? mode : "game";
+        state.mode = validMode;
+
+        document.querySelectorAll(".mode-tab").forEach((t) => {
+          t.classList.toggle("active", t.dataset.mode === validMode);
+        });
+
+        document.getElementById("panelGame").classList.toggle("hidden", validMode !== "game");
+        document.getElementById("panelPractice").classList.toggle("hidden", validMode !== "practice");
+        document.getElementById("panelSandbox").classList.toggle("hidden", validMode !== "sandbox");
+
+        syncUrlWithMode(validMode, !!replaceHistory);
+        saveUserData();
+
+        if (validMode === "game") {
+          selectGameStage(state.currentStageId || "1-1");
+        } else if (validMode === "practice") {
+          applyPracticeSettings();
+        } else {
+          applySandboxSettings();
+        }
+      }
+
+      // --- EVENT LISTENERS FOR UI CONTROLS ---
+      document.querySelectorAll(".mode-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          activateMode(tab.dataset.mode, false);
+        });
+      });
+
+      window.addEventListener("popstate", () => {
+        const urlMode = getModeFromUrl();
+        if (urlMode && urlMode !== state.mode) {
+          activateMode(urlMode, true);
+        }
+      });
+
+      window.addEventListener("hashchange", () => {
+        const urlMode = getModeFromUrl();
+        if (urlMode && urlMode !== state.mode) {
+          activateMode(urlMode, true);
+        }
+      });
+
+      // Offline / Online Switch
+      const btnOffline = document.getElementById("btnOffline");
+      const btnOnline = document.getElementById("btnOnline");
+      btnOffline.addEventListener("click", () => {
+        state.imageSource = "offline";
+        btnOffline.classList.add("active");
+        btnOnline.classList.remove("active");
+        saveUserData();
+        generatePuzzle();
+      });
+      btnOnline.addEventListener("click", () => {
+        state.imageSource = "online";
+        btnOnline.classList.add("active");
+        btnOffline.classList.remove("active");
+        saveUserData();
+        generatePuzzle();
+      });
+
+      // Refresh & Stop Buttons
+      document.getElementById("btnRefreshPuzzle").addEventListener("click", () => {
+        if (state.sessionFinished) {
+          resetSessionCounters();
+        }
+        generatePuzzle();
+      });
+
+      document.getElementById("btnStopRound").addEventListener("click", () => {
+        finishSession();
+      });
+
+      btnPlayAgain.addEventListener("click", () => {
+        resetSessionCounters();
+        generatePuzzle();
+      });
+
+      // Practice Controls
+      document.getElementById("pracDifficulty").addEventListener("change", applyPracticeSettings);
+      document.getElementById("pracTimeLimit").addEventListener("change", applyPracticeSettings);
+      document.getElementById("pracTestCount").addEventListener("change", applyPracticeSettings);
+      document.getElementById("btnRestartPractice").addEventListener("click", applyPracticeSettings);
+      document.getElementById("btnStopPractice").addEventListener("click", () => finishSession());
+      document.getElementById("btnClearScoreboard").addEventListener("click", () => {
+        state.scoreboard = [];
+        saveUserData();
+        renderScoreboard();
+      });
+
+      // Sandbox Controls
+      ["sbDecoyCount", "sbDecoyScaleMode", "sbDecoyRotation", "sbTimeLimit", "sbTolerance", "sbTestCount"].forEach(
+        (id) => {
+          document.getElementById(id).addEventListener("input", applySandboxSettings);
+          document.getElementById(id).addEventListener("change", applySandboxSettings);
+        }
+      );
+      document.getElementById("btnApplySandbox").addEventListener("click", applySandboxSettings);
+
+      // Initialize: restore saved user state + URL sub-directory routing (/game, /practice, /sandbox)
+      loadUserData();
+      btnOffline.classList.toggle("active", state.imageSource === "offline");
+      btnOnline.classList.toggle("active", state.imageSource === "online");
+      renderScoreboard();
+      renderChaptersUI();
+
+      const initialUrlMode = getModeFromUrl();
+      activateMode(initialUrlMode || state.mode || "game", true);
+    })();
+  </script>
+</body>
+</html>
